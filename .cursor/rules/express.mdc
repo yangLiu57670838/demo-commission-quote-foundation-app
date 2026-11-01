@@ -1,0 +1,24 @@
+---
+description: Express handlers for the mock vendor
+globs: "apps/mock-vendor/**/*.ts"
+alwaysApply: false
+---
+
+# Mock vendor Express handlers
+
+`POST /quote`. Check the `api-key` header. Validate the body with the shared schema. Ignore extra JSON fields. A success body has `quoteId`, `commissionRate`, and `totalCommission`.
+
+- `401` missing or wrong `api-key`
+- `400` bad input
+- `200` quote
+- `500` unexpected failure
+
+Normal mode fails at random using `VENDOR_FAILURE_RATE`.
+
+```ts
+// Bad: a bad key still looks like success
+res.status(200).json({ error: "bad key" });
+
+// Good
+res.status(401).json({ error: "Unauthorized" });
+```

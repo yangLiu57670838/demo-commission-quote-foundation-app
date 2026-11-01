@@ -1,0 +1,24 @@
+---
+description: Node process and env rules for the BFF and mock vendor.
+globs: apps/bff/**/*.ts, apps/mock-vendor/**/*.ts
+alwaysApply: false
+---
+
+# Node.js servers
+
+- Use Node 22 or newer (`engines.node` is `>=22`).
+- Read env once at startup. The BFF exits if `VENDOR_API_KEY` or `VENDOR_API_URL` is missing.
+- Do not log `process.env`. What else must stay out of logs is in the security rule.
+- Time out each vendor call with `VENDOR_TIMEOUT_MS`. See the performance rule.
+- On an unhandled error, log the error and `process.exit(1)`.
+
+```ts
+// Bad
+console.log(process.env);
+
+// Good
+if (!process.env.VENDOR_API_KEY || !process.env.VENDOR_API_URL) {
+  console.error("Missing VENDOR_API_KEY or VENDOR_API_URL");
+  process.exit(1);
+}
+```

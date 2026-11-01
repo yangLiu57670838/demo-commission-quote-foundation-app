@@ -1,0 +1,29 @@
+---
+description: GraphQL is only the door from the browser to the BFF.
+globs: apps/bff/**/*.ts
+alwaysApply: false
+---
+
+# GraphQL
+
+- Apollo Server stays at `/graphql` on the BFF port. Express there only hosts that route. Do not add a REST quote API. Only `apps/web` calls it. Ports are in the Node.js rule.
+- Keep the `health` query. One quote mutation is enough.
+- GraphQL types follow `@commission-quote/contracts`. Do not declare those fields again.
+- Validate variables with the shared schema before the vendor call.
+- A vendor body missing `quoteId`, `commissionRate`, or `totalCommission` is an error, not a quote.
+- Errors stay short. What must stay out of them is in the security rule.
+
+```graphql
+# Bad — secret is an argument; error echoes the vendor
+type Query {
+  quote(apiKey: String!): Quote
+}
+
+# Good — health stays; one mutation; secrets stay on the server
+type Query {
+  health: String!
+}
+type Mutation {
+  generateQuote(input: QuoteInput!): Quote!
+}
+```

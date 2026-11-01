@@ -1,0 +1,43 @@
+---
+description: Cheap accessibility basics for the React quote form.
+globs: "apps/web/**/*.tsx"
+alwaysApply: false
+---
+
+# Accessibility basics
+
+## Labels and button
+
+- Every input has a visible label. A placeholder is not a label.
+- Fields: loan amount, loan term in months, risk band (`LOW`, `MEDIUM`, `HIGH`).
+- The button name is Generate Quote.
+
+## Errors, focus, loading
+
+- Show the error next to the field.
+- Set `aria-invalid` and `aria-describedby` on that field. MUI `error` plus `helperText` does this.
+- Announce the quote or a request error with a live region (`aria-live="polite"`).
+- Focus order: amount, term, risk band, then Generate Quote.
+- Tab through the fields. Enter submits the form.
+- Loading is visible text or a disabled button. Do not show it only by a color change. Disabling the button while the request runs is required by the performance rule.
+
+## Contrast and phones
+
+- Use basic contrast. Do not use color as the only cue.
+- Keep touch targets easy to tap.
+- Narrow phone: one column, no sideways overflow, quote still readable. MUI `Container` is fine.
+
+## Example
+
+```tsx
+// Bad
+<TextField placeholder="Loan amount" />
+
+// Good
+<TextField
+  label="Loan amount"
+  error={!!error}
+  helperText={<span id="loan-amount-error">{error}</span>}
+  slotProps={{ htmlInput: { "aria-invalid": !!error, "aria-describedby": "loan-amount-error" } }}
+/>
+```

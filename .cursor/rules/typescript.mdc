@@ -1,0 +1,32 @@
+---
+description: TypeScript style for shared quote types in this app
+globs: "**/*.ts, **/*.tsx"
+alwaysApply: false
+---
+
+# TypeScript
+
+TypeScript covers `apps/web`, `apps/bff`, `apps/mock-vendor`, and `packages/contracts`. Keep `pnpm typecheck` green. Use Node 22+.
+
+Request and response types, and their Zod schemas, belong in `@commission-quote/contracts`. Import them. Do not copy a second interface in web, the BFF, or the vendor.
+
+These fields live only in contracts:
+
+- `loanAmount`, `loanTermInMonths`, `riskBand` (`LOW` | `MEDIUM` | `HIGH`)
+- `quoteId`, `commissionRate`, `totalCommission`
+
+The shared Zod schema rejects empty input, spaces only, zero, negative, `NaN`, `Infinity`, a term that is not a whole number, and any `riskBand` other than `LOW`, `MEDIUM`, or `HIGH`.
+
+A TypeScript type does not check HTTP or GraphQL JSON. Parse the body with the shared Zod schema from `@commission-quote/contracts` before you use it.
+
+Money that crosses the wire is a string or a decimal, not a binary float. If contracts already has a money type, use it. Do not add another.
+
+No `any`. Use `unknown` and narrow it. `noUncheckedIndexedAccess` is on, so an index read may be missing. Check it before use.
+
+```ts
+// Bad: trust the JSON and use a float
+const quote = (await res.json()) as { totalCommission: number };
+
+// Good: parse the shared schema from @commission-quote/contracts
+const quote = quoteResponseSchema.parse(await res.json());
+```

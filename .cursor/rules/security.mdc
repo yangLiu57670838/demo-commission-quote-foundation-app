@@ -1,0 +1,26 @@
+---
+description: Protect confidential staff lending data in this foundation.
+alwaysApply: true
+---
+
+# Security
+
+Loan amount, term, risk band, and the quote are confidential staff lending data. There is no card data, so PCI is not the driver.
+
+The browser calls the BFF only. It never calls the vendor and never sees the vendor URL or `api-key`.
+
+- `VENDOR_API_KEY` and `VENDOR_API_URL` are server env only. Not in React, `VITE_*` vars, git, logs, or error text.
+- Do not build the vendor URL from user input.
+- Validate on the server even if the form already checked. Use the shared schema (see the TypeScript rule).
+- Depend on `pnpm-lock.yaml`.
+- BFF CORS stays `http://localhost:5173`.
+
+This foundation has no staff login. Out of scope unless the user asks: SSO, audit log storage, TLS termination, a secret manager, rate limits, and a pen test.
+
+```ts
+// Bad
+cors({ origin: "*" });
+
+// Good
+cors({ origin: "http://localhost:5173" });
+```

@@ -1,0 +1,29 @@
+---
+description: Jest unit and integration tests for the quote app.
+globs: "**/*.test.ts, **/*.test.tsx"
+alwaysApply: false
+---
+
+# How to test
+
+Run `pnpm test` from the repo root. Jest is the runner. Do not add Vitest or Supertest. No 100% coverage goal. Test paths that can lose money, leak the `api-key`, or confuse the user. Playwright is a nice-to-have in `prd.md`. The load script is in the performance rule. Do not add either in these Jest files.
+
+## Unit test
+
+Cover the shared Zod rejects (see the TypeScript rule) and one valid input. Commission math: known inputs, rounding, and a large amount. Map timeout, 401, 500, and bad JSON to a short message.
+
+Security: a missing or wrong `api-key` fails. Logs and error text do not contain the key, a stack, or the vendor URL. Browser code does not hold the key or the vendor URL.
+
+Vendor HTTP uses `listen(0)`, `server.address()`, and `fetch`. Close the server in `afterAll`. The route is `POST /quote`.
+
+Accessibility, with React Testing Library, by role and visible text. See the accessibility rule. Each field has a visible label. The button name is Generate Quote. A bad field has `aria-invalid` and `aria-describedby`, or the result is in a live region. Loading is text or a disabled button, then the quote or a short error replaces it. An invalid submit shows a field message and does not call the server. Tab reaches the fields. Enter submits. A valid submit shows `quoteId`, `commissionRate`, and `totalCommission`.
+
+## Integration test
+
+Run the BFF and the mock vendor together only when a test needs both. The test calls the BFF. The BFF calls the vendor. Name the file `*.integration.test.ts`. Jest already picks that up. Do not use `.spec.ts`.
+
+Force the vendor so `VENDOR_FAILURE_RATE` does not flake the suite. The mock honors `x-simulate: success | error | timeout` only when that test process sets `VENDOR_SIMULATION=forced`. Do not put that env in `.env`. The BFF sets the header for the test. It must not copy `x-simulate` from the browser.
+
+A valid input returns `quoteId`, `commissionRate`, and `totalCommission`.
+
+Security: a wrong or missing `api-key` is rejected, and the browser never had the key. Forced error, timeout, and a vendor body missing quote fields show an error, not a quote. The page and the GraphQL error do not contain the key, a stack, or the vendor URL. Feature flag off rejects the request before the vendor is called.

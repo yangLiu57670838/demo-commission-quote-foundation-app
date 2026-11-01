@@ -1,0 +1,33 @@
+---
+description: Keep the quote path from hanging or firing twice.
+alwaysApply: true
+---
+
+# Quote path
+
+## Now
+
+- Time out the vendor call in the BFF. A slow vendor must not pile up requests.
+- Disable Generate Quote while a request is in flight so a double click does not call the vendor again. The web rule covers how that loading state looks.
+
+## Leave out
+
+Retries wait until the vendor agrees a repeat call is safe. The same loan details can return a new `quoteId` today.
+
+## Load test target
+
+One small script against the BFF. The mock vendor still answers each call. Set `VENDOR_FAILURE_RATE` to 0 so a random fake error is not counted as a capacity problem. 50 users at once. Most calls under a few seconds. No crash. No leaked key. Watch timeout piles.
+
+## Example
+
+```ts
+// BAD: the vendor call can hang forever
+await fetch(vendorUrl, { method: "POST", body });
+
+// GOOD: give up after a fixed time
+await fetch(vendorUrl, {
+  method: "POST",
+  body,
+  signal: AbortSignal.timeout(Number(process.env.VENDOR_TIMEOUT_MS)),
+});
+```
