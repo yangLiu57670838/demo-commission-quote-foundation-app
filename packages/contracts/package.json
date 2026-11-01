@@ -8,6 +8,9 @@
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "@types/jest": "catalog:",
     "@types/node": "catalog:",
