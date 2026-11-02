@@ -1,12 +1,13 @@
-import http from "node:http";
+import http, { type Server } from "node:http";
 import { quoteResponseSchema } from "@commission-quote/contracts";
 import express, { type Express } from "express";
+import request from "supertest";
 import { createApp } from "../../mock-vendor/src/app";
 import type { VendorAppConfig } from "../../mock-vendor/src/config";
-import type { BffConfig } from "./config";
-import { createGraphqlServer } from "./server";
-import { QUOTES_DISABLED_MESSAGE } from "./quoteLog";
-import { QUOTE_TIMEOUT_MESSAGE, QUOTE_UNAVAILABLE_MESSAGE } from "./vendorClient";
+import type { BffConfig } from "../src/config";
+import { QUOTES_DISABLED_MESSAGE } from "../src/quoteLog";
+import { createGraphqlServer } from "../src/server";
+import { QUOTE_TIMEOUT_MESSAGE, QUOTE_UNAVAILABLE_MESSAGE } from "../src/vendorClient";
 
 const API_KEY = "server-test-key";
 const BROWSER_KEY = "browser-test-key";
@@ -43,6 +44,7 @@ type VendorCall = {
 };
 
 type Running = {
+  server: Server;
   port: number;
   url: string;
   close: () => Promise<void>;
@@ -94,6 +96,7 @@ async function startRecordingVendor(): Promise<Running & { calls: VendorCall[] }
   await listen(server);
   const port = portOf(server);
   return {
+    server,
     port,
     url: `http://127.0.0.1:${port}`,
     calls,
@@ -106,6 +109,7 @@ async function startBff(config: BffConfig): Promise<Running> {
   await listen(server);
   const port = portOf(server);
   return {
+    server,
     port,
     url: `http://127.0.0.1:${port}`,
     close: () => close(server),
@@ -128,27 +132,19 @@ function bffConfig(
 }
 
 function postQuote(
-  port: number,
+  server: Server,
   input: unknown,
   headers: Record<string, string> = {},
-): Promise<Response> {
-  return fetch(`http://127.0.0.1:${port}/graphql`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...headers,
-    },
-    body: JSON.stringify({ query: MUTATION, variables: { input } }),
-  });
-}
-
-async function readGraphql(response: Response): Promise<{ status: number; text: string; body: GraphqlBody }> {
-  const text = await response.text();
-  return {
+): Promise<{ status: number; text: string; body: GraphqlBody }> {
+  let call = request(server).post("/graphql").set("content-type", "application/json");
+  for (const [name, value] of Object.entries(headers)) {
+    call = call.set(name, value);
+  }
+  return call.send({ query: MUTATION, variables: { input } }).then((response) => ({
     status: response.status,
-    text,
-    body: JSON.parse(text) as GraphqlBody,
-  };
+    text: response.text,
+    body: response.body as GraphqlBody,
+  }));
 }
 
 function expectNoSecrets(text: string, vendorUrl: string) {
@@ -198,11 +194,10 @@ describe("generateCommissionQuote", () => {
   });
 
   it("returns a quote for valid input in forced success mode", async () => {
-    const response = await postQuote(successBff.port, validInput, {
+    const { status, text, body } = await postQuote(successBff.server, validInput, {
       "api-key": BROWSER_KEY,
       "x-simulate": "error",
     });
-    const { status, text, body } = await readGraphql(response);
     const quote = quoteResponseSchema.parse(body.data?.generateCommissionQuote);
 
     expect(status).toBe(200);
@@ -220,15 +215,24 @@ describe("generateCommissionQuote", () => {
     expectNoSecrets(text, vendor.url);
   });
 
+  it("returns the quote when the browser does not send an api-key", async () => {
+    const { text, body } = await postQuote(successBff.server, validInput);
+    const quote = quoteResponseSchema.parse(body.data?.generateCommissionQuote);
+
+    expect(quote.quoteId.length).toBeGreaterThan(0);
+    expect(quote.commissionRate).toBe("0.005");
+    expect(quote.totalCommission).toBe("50.00");
+    expect(lastCall(vendor.calls).apiKey).toBe(API_KEY);
+    expectNoSecrets(text, vendor.url);
+  });
+
   it.each([
     ["zero amount", { ...validInput, loanAmount: "0" }, "Loan amount must be greater than 0"],
     ["wrong band", { ...validInput, riskBand: "high" }, "Risk band must be LOW, MEDIUM, or HIGH"],
     ["term 12.5", { ...validInput, loanTermInMonths: 12.5 }, undefined],
   ])("rejects %s before calling the vendor", async (_name, input, message) => {
     const before = vendor.calls.length;
-    const response = await postQuote(successBff.port, input);
-    const { text, body } = await readGraphql(response);
-
+    const { text, body } = await postQuote(successBff.server, input);
     expect(vendor.calls.length).toBe(before);
     expect(body.data?.generateCommissionQuote ?? null).toBeNull();
     const errorMessage = body.errors?.[0]?.message ?? "";
@@ -241,9 +245,7 @@ describe("generateCommissionQuote", () => {
   });
 
   it("maps a bad vendor key to a safe error", async () => {
-    const response = await postQuote(badKeyBff.port, validInput);
-    const { text, body } = await readGraphql(response);
-
+    const { text, body } = await postQuote(badKeyBff.server, validInput);
     expect(body.data).toBeNull();
     expect(body.errors).toEqual([{ message: QUOTE_UNAVAILABLE_MESSAGE }]);
     expect(lastCall(vendor.calls).apiKey).toBe("wrong-test-key");
@@ -252,10 +254,25 @@ describe("generateCommissionQuote", () => {
     expectNoSecrets(text, vendor.url);
   });
 
-  it("maps a forced vendor error to a safe error", async () => {
-    const response = await postQuote(errorBff.port, validInput);
-    const { text, body } = await readGraphql(response);
+  it("rejects a missing vendor api-key and does not return a quote", async () => {
+    const bff = await startBff(
+      bffConfig(vendor.url, { vendorApiKey: "", vendorSimulate: "success" }),
+    );
 
+    try {
+      const { text, body } = await postQuote(bff.server, validInput);
+      expect(body.data).toBeNull();
+      expect(body.errors).toEqual([{ message: QUOTE_UNAVAILABLE_MESSAGE }]);
+      expect(lastCall(vendor.calls).apiKey ?? "").toBe("");
+      expect(text).not.toContain("Unauthorized");
+      expectNoSecrets(text, vendor.url);
+    } finally {
+      await bff.close();
+    }
+  });
+
+  it("maps a forced vendor error to a safe error", async () => {
+    const { text, body } = await postQuote(errorBff.server, validInput);
     expect(body.data).toBeNull();
     expect(body.errors).toEqual([{ message: QUOTE_UNAVAILABLE_MESSAGE }]);
     expect(lastCall(vendor.calls).simulate).toBe("error");
@@ -265,9 +282,7 @@ describe("generateCommissionQuote", () => {
 
   it("maps a forced slow vendor to a timeout", async () => {
     const started = Date.now();
-    const response = await postQuote(timeoutBff.port, validInput);
-    const { text, body } = await readGraphql(response);
-
+    const { text, body } = await postQuote(timeoutBff.server, validInput);
     expect(body.data).toBeNull();
     expect(body.errors).toEqual([{ message: QUOTE_TIMEOUT_MESSAGE }]);
     expect(lastCall(vendor.calls).simulate).toBe("timeout");
@@ -286,8 +301,7 @@ describe("generateCommissionQuote", () => {
 
     try {
       const before = vendor.calls.length;
-      const response = await postQuote(bff.port, validInput, { "api-key": BROWSER_KEY });
-      const { text, body } = await readGraphql(response);
+      const { text, body } = await postQuote(bff.server, validInput, { "api-key": BROWSER_KEY });
       const quoteLogs = logs.filter((line) => line.includes('"outcome"'));
 
       expect(vendor.calls.length).toBe(before);
@@ -325,6 +339,7 @@ describe("generateCommissionQuote with a vendor body that breaks the contract", 
     await listen(server);
     const port = portOf(server);
     return {
+      server,
       port,
       url: `http://127.0.0.1:${port}`,
       close: () => close(server),
@@ -336,9 +351,7 @@ describe("generateCommissionQuote with a vendor body that breaks the contract", 
     const bff = await startBff(bffConfig(vendor.url, { vendorSimulate: "success" }));
 
     try {
-      const response = await postQuote(bff.port, validInput);
-      const { text, body } = await readGraphql(response);
-
+      const { text, body } = await postQuote(bff.server, validInput);
       expect(body.data).toBeNull();
       expect(body.errors).toEqual([{ message: QUOTE_UNAVAILABLE_MESSAGE }]);
       expect(text).not.toContain("partial-quote");

@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "pnpm -r --parallel --if-present dev",
     "test": "pnpm -r --if-present test",
+    "test:integration": "pnpm --filter @commission-quote/bff test:integration",
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present typecheck"
   },

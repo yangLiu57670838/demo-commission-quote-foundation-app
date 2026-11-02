@@ -88,7 +88,7 @@ Compose runs three containers together: the mock vendor (Node), the BFF (Node), 
 docker compose up --build
 ```
 
-Open http://localhost:8080. The same form is there. `pnpm dev`, `pnpm test`, `pnpm lint`, and `pnpm typecheck` are unchanged.
+Open http://localhost:8080. The same form is there. `pnpm dev`, `pnpm test`, `pnpm test:integration`, `pnpm lint`, and `pnpm typecheck` still run outside Compose.
 
 The vendor key is read from `.env.dev` at start. It is not a Docker build arg. nginx runs as an unprivileged user, with a read-only root filesystem and no extra capabilities. It adds the usual staff-page headers (including a content security policy and `X-Frame-Options: DENY`), caps the quote body at 16 KB, and limits how fast `/graphql` can be called. It also clears any `api-key` or `x-simulate` header on the way to the BFF, so the browser cannot pass the vendor key or force a fault. TLS for a real deployment would stop in front of nginx. This demo speaks HTTP on the Compose network and does not send HSTS.
 
@@ -96,9 +96,12 @@ The vendor key is read from `.env.dev` at start. It is not a Docker build arg. n
 
 ```bash
 pnpm test
+pnpm test:integration
 pnpm lint
 pnpm typecheck
 ```
+
+`pnpm test` runs the unit and UI tests. `pnpm test:integration` is separate. Supertest calls the BFF, and the BFF calls the mock vendor. Those tests live in `apps/bff/integration`.
 
 ## Mock formula and demo limits
 

@@ -15,6 +15,7 @@ module.exports = {
       },
     ],
   },
-  testMatch: ["**/*.test.ts"],
+  testMatch: ["<rootDir>/src/**/*.test.ts"],
+  testPathIgnorePatterns: ["<rootDir>/integration/"],
   transformIgnorePatterns: ["node_modules/(?!@commission-quote/contracts)"],
 };

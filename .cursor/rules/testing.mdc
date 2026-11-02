@@ -1,12 +1,12 @@
 ---
-description: Jest unit and integration tests for the quote app.
+description: Jest unit tests and Supertest integration tests for the quote app.
 globs: "**/*.test.ts, **/*.test.tsx"
 alwaysApply: false
 ---
 
 # How to test
 
-Run `pnpm test` from the repo root. Jest is the runner. Do not add Vitest or Supertest. No 100% coverage goal. Test paths that can lose money, leak the `api-key`, or confuse the user. Playwright is a nice-to-have in `prd.md`. The load script is in the performance rule. Do not add either in these Jest files.
+Run `pnpm test` from the repo root for unit and UI tests. Jest is that runner. Run `pnpm test:integration` for the BFF and mock vendor together. Those tests use Supertest and live in `apps/bff/integration`. Do not add Vitest. No 100% coverage goal. Test paths that can lose money, leak the `api-key`, or confuse the user. Playwright is a nice-to-have in `prd.md`. The load script is in the performance rule. Do not add either in these test files.
 
 ## Unit test
 
@@ -20,7 +20,7 @@ Accessibility, with React Testing Library, by role and visible text. See the acc
 
 ## Integration test
 
-Run the BFF and the mock vendor together only when a test needs both. The test calls the BFF. The BFF calls the vendor. Name the file `*.integration.test.ts`. Jest already picks that up. Do not use `.spec.ts`.
+Run the BFF and the mock vendor together only when a test needs both. Put the file in `apps/bff/integration`. Supertest calls the BFF. The BFF calls the vendor over HTTP. `pnpm test` does not run this folder. Use `pnpm test:integration`. Do not use `.spec.ts`.
 
 Force the vendor so `VENDOR_FAILURE_RATE` does not flake the suite. The mock honors `x-simulate: success | error | timeout` only when that test process sets `VENDOR_SIMULATION=forced`. Do not put that env in `.env`. The BFF sets the header for the test. It must not copy `x-simulate` from the browser.
 

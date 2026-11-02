@@ -44,7 +44,8 @@ GraphQL is only the door between the browser and our server. The vendor stays pl
 | Express mock vendor | Real HTTP, real headers, real status codes | A fake in-process function would hide auth and network bugs |
 | Zod | Checks data at the server and vendor. TypeScript does not check HTTP bodies | Hand-written checks |
 | decimal.js | Money math without binary float errors | Only if we show rounding in the interview |
-| Vitest + React Testing Library + Supertest | Unit, UI, and HTTP tests in one style | Jest is fine |
+| Jest + React Testing Library | Unit and UI tests, one `pnpm test` | — |
+| Supertest | Integration tests call the BFF over HTTP. Separate command: `pnpm test:integration` | A hand-written `fetch` |
 | Pino | JSON logs, hide the API key | `console` is enough for the timebox |
 | Env feature flag | Turn quotes off without a deploy platform | Skip if time is gone |
 | Docker Compose | One command to start web, BFF, and vendor | `npm` scripts must still work |
@@ -82,7 +83,7 @@ We do not need 100% coverage. Test the paths that can lose money, leak the key, 
 
 ### Integration
 
-Run the BFF and mock vendor together. Force success or failure so random faults do not flake the suite.
+Run with `pnpm test:integration`. The tests live in `apps/bff/integration` and are not part of `pnpm test`. Supertest calls the BFF. The BFF calls the mock vendor. Force success or failure so random faults do not flake the suite.
 
 - Happy path: valid input returns the three quote fields.
 - Wrong or missing `api-key` is rejected and the browser never needed the key.
