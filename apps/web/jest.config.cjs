@@ -18,6 +18,7 @@ module.exports = {
       },
     ],
   },
-  testMatch: ["**/*.test.ts", "**/*.test.tsx"],
+  testMatch: ["<rootDir>/src/**/*.test.ts", "<rootDir>/src/**/*.test.tsx"],
+  testPathIgnorePatterns: ["<rootDir>/e2e/"],
   transformIgnorePatterns: ["node_modules/(?!@commission-quote/contracts)"],
 };

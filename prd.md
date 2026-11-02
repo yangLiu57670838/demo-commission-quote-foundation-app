@@ -157,7 +157,7 @@ This is staff lending data. Treat the loan and the quote as confidential. There 
 - JSON logs with a request id, and the API key redacted.
 - The basic accessibility and mobile items above, if they did not fit the first pass.
 - A short load script with failures turned off.
-- Playwright browser tests in `apps/web` (`test:e2e`), after the must-ship works. Not part of `pnpm test`. Jest keeps the unit and integration tests. Start the web app, the BFF, and the mock vendor, then open `http://localhost:5173`. The page calls the BFF only. Set `VENDOR_SIMULATION=forced` on the server. Do not put the vendor key, the vendor URL, or `x-simulate` in the page or in a `VITE_` variable. Cover a valid quote, a field error that does not call the BFF, loading then the result, Tab and Enter, and a narrow viewport. The screen never shows the `api-key`, a stack, or the vendor URL.
+- Playwright browser tests in `apps/web` (`pnpm test:e2e`), after the must-ship works. Not part of `pnpm test` or `pnpm test:integration`. Cucumber feature files drive Playwright through a page object and a separate locator file in `apps/web/e2e`. The suite starts the web app, the BFF, and the mock vendor. The page calls the BFF only. Set `VENDOR_SIMULATION=forced` and `VENDOR_FAILURE_RATE=0` on the server process so the run does not flake. Do not put the vendor key, the vendor URL, or `x-simulate` in the page or in a `VITE_` variable. Cover a valid quote, a field error that does not call the BFF, loading then the result, Tab and Enter, and a narrow viewport. The screen never shows the `api-key`, a stack, or the vendor URL.
 
 ## 10. After this foundation
 

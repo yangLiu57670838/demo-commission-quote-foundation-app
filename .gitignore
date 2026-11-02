@@ -9,3 +9,6 @@ coverage
 *.log
 .DS_Store
 .vite
+test-results
+playwright-report
+blob-report

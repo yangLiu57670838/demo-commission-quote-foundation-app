@@ -103,6 +103,15 @@ pnpm typecheck
 
 `pnpm test` runs the unit and UI tests. `pnpm test:integration` is separate. Supertest calls the BFF, and the BFF calls the mock vendor. Those tests live in `apps/bff/integration`.
 
+Browser tests are separate again:
+
+```bash
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
+`pnpm test:e2e` starts the mock vendor, the BFF, and Vite, then opens the page. Cucumber reads `apps/web/e2e/features`. Steps call a page object, and the page object uses `apps/web/e2e/locators`. The vendor process is started with `VENDOR_SIMULATION=forced` and `VENDOR_FAILURE_RATE=0`, so a random failure does not flake the run. The Vite process does not receive the vendor key, the vendor URL, or `x-simulate`. The suite checks a valid quote, a bad amount that does not call the BFF, loading then the result, Tab and Enter, and a 390-pixel-wide screen.
+
 ## Mock formula and demo limits
 
 The challenge does not define a commission formula or a maximum loan. The numbers below are demo assumptions. When a real vendor arrives, delete the formula and trust the vendor's quote.

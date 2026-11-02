@@ -26,4 +26,8 @@ Force the vendor so `VENDOR_FAILURE_RATE` does not flake the suite. The mock hon
 
 A valid input returns `quoteId`, `commissionRate`, and `totalCommission`.
 
+## Browser
+
+`pnpm test:e2e` runs Cucumber and Playwright from `apps/web/e2e`. It is not part of `pnpm test`. A feature file describes the quote. Steps call a page object. The page object reads a separate locator file. The suite starts the three apps. The vendor process gets `VENDOR_SIMULATION=forced` and `VENDOR_FAILURE_RATE=0`. The page does not receive the vendor key, the vendor URL, or `x-simulate`.
+
 Security: a wrong or missing `api-key` is rejected, and the browser never had the key. Forced error, timeout, and a vendor body missing quote fields show an error, not a quote. The page and the GraphQL error do not contain the key, a stack, or the vendor URL. Feature flag off rejects the request before the vendor is called.

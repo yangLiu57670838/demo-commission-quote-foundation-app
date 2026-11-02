@@ -1,7 +1,7 @@
 import { readBffConfig } from "./config";
 import { createGraphqlServer } from "./server";
 
-const port = 4000;
+const port = listenPort(process.env.PORT, 4000);
 
 const configResult = readBffConfig(process.env);
 if (!configResult.ok) {
@@ -10,6 +10,22 @@ if (!configResult.ok) {
 }
 
 const config = configResult.config;
+
+function listenPort(value: string | undefined, fallback: number): number {
+  if (value === undefined || value.trim() === "") {
+    return fallback;
+  }
+  if (!/^\d+$/.test(value.trim())) {
+    console.error("PORT must be a whole number from 1 to 65535");
+    process.exit(1);
+  }
+  const parsed = Number(value.trim());
+  if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > 65535) {
+    console.error("PORT must be a whole number from 1 to 65535");
+    process.exit(1);
+  }
+  return parsed;
+}
 
 async function main() {
   const httpServer = await createGraphqlServer(config);

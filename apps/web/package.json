@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "test": "jest",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit"
+    "test:e2e": "node --import tsx ./node_modules/@cucumber/cucumber/bin/cucumber.js --config e2e/cucumber.mjs",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.e2e.json --noEmit"
   },
   "dependencies": {
     "@commission-quote/contracts": "workspace:*",
@@ -25,10 +26,13 @@
     "@types/node": "catalog:",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@cucumber/cucumber": "^11.3.0",
+    "@playwright/test": "^1.56.1",
     "@vitejs/plugin-react": "^6.1.2",
     "jest": "catalog:",
     "jest-environment-jsdom": "^30.5.2",
     "ts-jest": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "^8.3.5"
   }

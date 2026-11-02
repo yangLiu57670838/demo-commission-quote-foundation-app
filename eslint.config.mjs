@@ -25,6 +25,14 @@ export default tseslint.config(
     },
   },
   {
+    files: ["apps/web/e2e/**/*.ts"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
     files: ["apps/web/vite.config.ts"],
     languageOptions: {
       globals: {

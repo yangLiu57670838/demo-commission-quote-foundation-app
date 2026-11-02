@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 
 /**
- * Playwright plan. Not wired up yet. Do not add a vendor secret here.
+ * Playwright runs from `apps/web/e2e` (`pnpm test:e2e`). Do not add a vendor secret here.
  *
- * Browser automation runs later from `apps/web` (`test:e2e`). It is not part of Jest `pnpm test`.
+ * Cucumber drives Playwright. It is not part of Jest `pnpm test`.
  * Playwright opens http://localhost:5173. The page calls the BFF only.
  * `VENDOR_API_KEY`, `VENDOR_API_URL`, and `x-simulate` stay on the server.
  * Do not declare them as `VITE_` variables in this file.
