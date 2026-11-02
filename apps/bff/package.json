@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node --env-file-if-exists=../../.env.local --import tsx --watch src/index.ts",
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
