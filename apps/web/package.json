@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit"
   },
   "dependencies": {
+    "@commission-quote/contracts": "workspace:*",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^9.5.0",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "^19.2.2",

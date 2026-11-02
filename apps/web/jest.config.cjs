@@ -19,4 +19,5 @@ module.exports = {
     ],
   },
   testMatch: ["**/*.test.ts", "**/*.test.tsx"],
+  transformIgnorePatterns: ["node_modules/(?!@commission-quote/contracts)"],
 };
