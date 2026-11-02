@@ -26,7 +26,7 @@ describe("quoteRequestSchema", () => {
     expect(quoteRequestSchema.parse({ ...validRequest, note: "ignore me" })).toEqual(validRequest);
   });
 
-  it("accepts the demo maximum amount and term", () => {
+  it("accepts the maximum amount and term", () => {
     expect(
       quoteRequestSchema.parse({
         loanAmount: DEMO_MAX_LOAN_AMOUNT,

@@ -11,3 +11,4 @@ catalog:
   tsx: 4.23.15
   "@types/express": 5.0.6
   zod: 4.6.7
+  decimal.js: 10.6.0

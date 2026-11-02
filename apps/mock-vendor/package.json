@@ -8,6 +8,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@commission-quote/contracts": "workspace:*",
+    "decimal.js": "catalog:",
     "express": "^5.3.0"
   },
   "devDependencies": {

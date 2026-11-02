@@ -92,7 +92,7 @@ function positiveDecimalSchema(label: string, maximum: string) {
       error: (issue) =>
         issue.input === undefined
           ? `${label} is required`
-          : `${label} must be a finite number`,
+          : `${label} must be a decimal string`,
     })
     .trim()
     .superRefine((value, ctx) => {
@@ -134,7 +134,7 @@ function normalizeTerm(value: unknown): unknown {
   }
 
   // A non-zero fraction is not a whole number. Do not pass it through Number():
-  // a long fraction can round to an integer and slip past the int() check.
+  // for example, 1.00001 or 12.5 will be converted to 0.5, and fail in next int() check.
   if (/^-?(?:0|[1-9]\d*)\.\d+$/.test(trimmed)) {
     return 0.5;
   }
