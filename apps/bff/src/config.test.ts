@@ -28,6 +28,33 @@ describe("readBffConfig", () => {
       expect(result.config.vendorApiKey).toBe(API_KEY);
       expect(result.config.vendorTimeoutMs).toBe(DEFAULT_VENDOR_TIMEOUT_MS);
       expect(result.config.vendorSimulate).toBeUndefined();
+      expect(result.config.quotesEnabled).toBe(true);
+    }
+  });
+
+  it("turns quotes off only when the flag is false", () => {
+    const disabled = readBffConfig({
+      VENDOR_API_KEY: API_KEY,
+      VENDOR_API_URL: "http://localhost:4001",
+      ENABLE_COMMISSION_QUOTE: "false",
+    });
+    const enabled = readBffConfig({
+      VENDOR_API_KEY: API_KEY,
+      VENDOR_API_URL: "http://localhost:4001",
+      ENABLE_COMMISSION_QUOTE: "TRUE",
+    });
+    const invalid = readBffConfig({
+      VENDOR_API_KEY: API_KEY,
+      VENDOR_API_URL: "http://localhost:4001",
+      ENABLE_COMMISSION_QUOTE: API_KEY,
+    });
+
+    expect(disabled.ok && disabled.config.quotesEnabled).toBe(false);
+    expect(enabled.ok && enabled.config.quotesEnabled).toBe(true);
+    expect(invalid.ok).toBe(false);
+    if (!invalid.ok) {
+      expect(invalid.message).toBe("ENABLE_COMMISSION_QUOTE must be true or false");
+      expect(invalid.message).not.toContain(API_KEY);
     }
   });
 

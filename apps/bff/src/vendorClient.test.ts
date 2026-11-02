@@ -74,11 +74,14 @@ async function startStub(
   return { port, captured, stop: () => close(server) };
 }
 
+const REQUEST_ID = "11111111-1111-4111-8111-111111111111";
+
 function configFor(port: number, simulate?: VendorSimulate, timeoutMs = 1000): BffConfig {
   return {
     vendorApiUrl: `http://127.0.0.1:${port}`,
     vendorApiKey: API_KEY,
     vendorTimeoutMs: timeoutMs,
+    quotesEnabled: true,
     ...(simulate === undefined ? {} : { vendorSimulate: simulate }),
   };
 }
@@ -122,14 +125,16 @@ describe("requestCommissionQuote", () => {
     });
 
     try {
-      const quote = await requestCommissionQuote(configFor(stub.port, "success"), validInput);
+      const quote = await requestCommissionQuote(
+        configFor(stub.port, "success"),
+        validInput,
+        REQUEST_ID,
+      );
 
       expect(quoteResponseSchema.parse(quote)).toEqual(validQuote);
       expect(quote).not.toHaveProperty("debug");
       expect(stub.captured.apiKey).toBe(API_KEY);
-      expect(stub.captured.requestId).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-      );
+      expect(stub.captured.requestId).toBe(REQUEST_ID);
       expect(stub.captured.body).toBe(JSON.stringify(validInput));
       expect(stub.captured.body).not.toContain(API_KEY);
     } finally {
@@ -144,7 +149,7 @@ describe("requestCommissionQuote", () => {
     });
 
     try {
-      await requestCommissionQuote(configFor(stub.port), validInput);
+      await requestCommissionQuote(configFor(stub.port), validInput, REQUEST_ID);
       expect(stub.captured.simulate).toBeUndefined();
     } finally {
       await stub.stop();
@@ -163,7 +168,11 @@ describe("requestCommissionQuote", () => {
     });
 
     try {
-      const error = await requestCommissionQuote(configFor(stub.port, "success"), validInput).then(
+      const error = await requestCommissionQuote(
+        configFor(stub.port, "success"),
+        validInput,
+        REQUEST_ID,
+      ).then(
         () => {
           throw new Error("Expected the vendor call to fail");
         },
@@ -194,7 +203,11 @@ describe("requestCommissionQuote", () => {
 
     try {
       const started = Date.now();
-      const error = await requestCommissionQuote(configFor(stub.port, "timeout", 40), validInput).then(
+      const error = await requestCommissionQuote(
+        configFor(stub.port, "timeout", 40),
+        validInput,
+        REQUEST_ID,
+      ).then(
         () => {
           throw new Error("Expected the vendor call to time out");
         },
@@ -220,8 +233,9 @@ describe("requestCommissionQuote", () => {
     try {
       const vendorApiUrl = `http://127.0.0.1:${port}`;
       const error = await requestCommissionQuote(
-        { vendorApiUrl, vendorApiKey: API_KEY, vendorTimeoutMs: 500 },
+        { vendorApiUrl, vendorApiKey: API_KEY, vendorTimeoutMs: 500, quotesEnabled: true },
         validInput,
+        REQUEST_ID,
       ).then(
         () => {
           throw new Error("Expected the vendor call to fail");

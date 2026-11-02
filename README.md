@@ -60,7 +60,7 @@ pnpm install
 | `VENDOR_FAILURE_RATE` | Chance the mock fails a quote, from `0` to `1`. `0.2` if unset (about one call in five). |
 | `BFF_URL` | Where the Vite dev server proxies `/graphql`. `http://localhost:4000` if unset. nginx does not use this. It proxies to the BFF container directly. |
 
-`ENABLE_COMMISSION_QUOTE` is in the env files for a later kill switch. The running app does not read it.
+`ENABLE_COMMISSION_QUOTE=false` turns quotes off in the BFF before the vendor is called. The page then says `Commission quotes are turned off.` Any other value, or leaving it unset, leaves quotes on. Set it back to `true` and restart the BFF to turn them on again.
 
 The page calls `/graphql` on its own origin. With `pnpm dev`, Vite proxies that to the BFF. In Compose, nginx does. The page has no vendor URL and no `api-key`.
 

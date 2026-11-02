@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { quoteResponseSchema, type QuoteRequest, type QuoteResponse } from "@commission-quote/contracts";
 import type { BffConfig } from "./config";
 
@@ -68,11 +67,12 @@ async function discardBody(response: Response): Promise<void> {
 export async function requestCommissionQuote(
   config: BffConfig,
   input: QuoteRequest,
+  requestId: string,
 ): Promise<QuoteResponse> {
   const headers: Record<string, string> = {
     "content-type": "application/json",
     "api-key": config.vendorApiKey,
-    "x-request-id": randomUUID(),
+    "x-request-id": requestId,
   };
   if (config.vendorSimulate !== undefined) {
     headers["x-simulate"] = config.vendorSimulate;

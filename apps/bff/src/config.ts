@@ -4,6 +4,8 @@ export type BffConfig = {
   vendorApiUrl: string;
   vendorApiKey: string;
   vendorTimeoutMs: number;
+  /** `ENABLE_COMMISSION_QUOTE=false` turns quotes off before the vendor is called. */
+  quotesEnabled: boolean;
   /** Tests set this so the BFF can force the vendor. It is never taken from the browser. */
   vendorSimulate?: VendorSimulate;
 };
@@ -17,6 +19,7 @@ export type BffConfigResult =
 const MISSING_VENDOR_ENV = "Missing VENDOR_API_KEY or VENDOR_API_URL";
 const INVALID_VENDOR_URL = "VENDOR_API_URL must be an http(s) URL";
 const INVALID_TIMEOUT = "VENDOR_TIMEOUT_MS must be a positive whole number";
+const INVALID_QUOTE_FLAG = "ENABLE_COMMISSION_QUOTE must be true or false";
 
 export function readBffConfig(env: Record<string, string | undefined>): BffConfigResult {
   const vendorApiKey = env.VENDOR_API_KEY;
@@ -47,14 +50,34 @@ export function readBffConfig(env: Record<string, string | undefined>): BffConfi
     return { ok: false, message: INVALID_TIMEOUT };
   }
 
+  const quotesEnabled = readQuotesEnabled(env.ENABLE_COMMISSION_QUOTE);
+  if (quotesEnabled === undefined) {
+    return { ok: false, message: INVALID_QUOTE_FLAG };
+  }
+
   return {
     ok: true,
     config: {
       vendorApiKey,
       vendorApiUrl,
       vendorTimeoutMs,
+      quotesEnabled,
     },
   };
+}
+
+function readQuotesEnabled(value: string | undefined): boolean | undefined {
+  if (value === undefined || value.trim() === "") {
+    return true;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true") {
+    return true;
+  }
+  if (normalized === "false") {
+    return false;
+  }
+  return undefined;
 }
 
 function readTimeout(value: string | undefined): number | undefined {

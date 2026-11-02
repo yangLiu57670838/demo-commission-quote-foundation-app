@@ -5,6 +5,7 @@ import { createApp } from "../../mock-vendor/src/app";
 import type { VendorAppConfig } from "../../mock-vendor/src/config";
 import type { BffConfig } from "./config";
 import { createGraphqlServer } from "./server";
+import { QUOTES_DISABLED_MESSAGE } from "./quoteLog";
 import { QUOTE_TIMEOUT_MESSAGE, QUOTE_UNAVAILABLE_MESSAGE } from "./vendorClient";
 
 const API_KEY = "server-test-key";
@@ -113,12 +114,15 @@ async function startBff(config: BffConfig): Promise<Running> {
 
 function bffConfig(
   vendorUrl: string,
-  overrides: Partial<Pick<BffConfig, "vendorApiKey" | "vendorTimeoutMs" | "vendorSimulate">> = {},
+  overrides: Partial<
+    Pick<BffConfig, "vendorApiKey" | "vendorTimeoutMs" | "vendorSimulate" | "quotesEnabled">
+  > = {},
 ): BffConfig {
   return {
     vendorApiUrl: vendorUrl,
     vendorApiKey: API_KEY,
     vendorTimeoutMs: 1000,
+    quotesEnabled: true,
     ...overrides,
   };
 }
@@ -269,6 +273,44 @@ describe("generateCommissionQuote", () => {
     expect(lastCall(vendor.calls).simulate).toBe("timeout");
     expect(Date.now() - started).toBeLessThan(2000);
     expectNoSecrets(text, vendor.url);
+  });
+
+  it("rejects the quote before the vendor when the kill switch is off", async () => {
+    const logs: string[] = [];
+    const spy = jest.spyOn(console, "log").mockImplementation((line: unknown) => {
+      logs.push(String(line));
+    });
+    const bff = await startBff(
+      bffConfig(vendor.url, { quotesEnabled: false, vendorSimulate: "success" }),
+    );
+
+    try {
+      const before = vendor.calls.length;
+      const response = await postQuote(bff.port, validInput, { "api-key": BROWSER_KEY });
+      const { text, body } = await readGraphql(response);
+      const quoteLogs = logs.filter((line) => line.includes('"outcome"'));
+
+      expect(vendor.calls.length).toBe(before);
+      expect(body.data?.generateCommissionQuote ?? null).toBeNull();
+      expect(body.errors).toEqual([{ message: QUOTES_DISABLED_MESSAGE }]);
+      expectNoSecrets(text, vendor.url);
+      expect(quoteLogs).toHaveLength(1);
+      const logged = JSON.parse(quoteLogs[0] ?? "{}") as { requestId?: string; outcome?: string };
+      expect(logged.outcome).toBe("disabled");
+      expect(logged.requestId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
+      const logText = quoteLogs.join("\n");
+      expect(logText).not.toContain(API_KEY);
+      expect(logText).not.toContain(BROWSER_KEY);
+      expect(logText).not.toContain(vendor.url);
+      expect(logText).not.toContain(validInput.loanAmount);
+      expect(logText).not.toContain("loanTermInMonths");
+      expect(logText).not.toContain("riskBand");
+    } finally {
+      spy.mockRestore();
+      await bff.close();
+    }
   });
 });
 

@@ -6,6 +6,7 @@ const config: BffConfig = {
   vendorApiUrl: "http://127.0.0.1:9",
   vendorApiKey: "health-check-key",
   vendorTimeoutMs: 2000,
+  quotesEnabled: true,
 };
 
 describe("POST /graphql", () => {

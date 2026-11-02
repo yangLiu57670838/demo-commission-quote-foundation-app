@@ -5,8 +5,10 @@ import { quoteRequestSchema, type QuoteResponse } from "@commission-quote/contra
 import cors from "cors";
 import express from "express";
 import { GraphQLError, type GraphQLFormattedError } from "graphql";
+import { randomUUID } from "node:crypto";
 import http from "node:http";
 import type { BffConfig } from "./config";
+import { QUOTES_DISABLED_MESSAGE, logQuote } from "./quoteLog";
 import {
   QUOTE_UNAVAILABLE_MESSAGE,
   VendorCallError,
@@ -58,14 +60,25 @@ export async function createGraphqlServer(config: BffConfig) {
           _parent: unknown,
           args: { input: unknown },
         ): Promise<QuoteResponse> => {
+          const requestId = randomUUID();
+          const secrets = [config.vendorApiKey, config.vendorApiUrl];
+          if (!config.quotesEnabled) {
+            logQuote({ requestId, outcome: "disabled" }, secrets);
+            throw new GraphQLError(QUOTES_DISABLED_MESSAGE);
+          }
+
           const parsed = quoteRequestSchema.safeParse(args.input);
           if (!parsed.success) {
+            logQuote({ requestId, outcome: "invalid" }, secrets);
             throw new GraphQLError(validationMessage(parsed.error.issues));
           }
 
           try {
-            return await requestCommissionQuote(config, parsed.data);
+            const quote = await requestCommissionQuote(config, parsed.data, requestId);
+            logQuote({ requestId, outcome: "quoted" }, secrets);
+            return quote;
           } catch (error) {
+            logQuote({ requestId, outcome: "failed" }, secrets);
             if (error instanceof VendorCallError) {
               throw new GraphQLError(error.message);
             }
