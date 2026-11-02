@@ -10,6 +10,7 @@
     "test": "pnpm -r --if-present test",
     "test:integration": "pnpm --filter @commission-quote/bff test:integration",
     "test:e2e": "pnpm --filter @commission-quote/web test:e2e",
+    "load": "pnpm --filter @commission-quote/load load",
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present typecheck"
   },

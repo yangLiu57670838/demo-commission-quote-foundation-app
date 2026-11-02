@@ -16,7 +16,7 @@ Retries wait until the vendor agrees a repeat call is safe. The same loan detail
 
 ## Load test target
 
-One small script against the BFF. The mock vendor still answers each call. Set `VENDOR_FAILURE_RATE` to 0 so a random fake error is not counted as a capacity problem. 50 users at once. Most calls under a few seconds. No crash. No leaked key. Watch timeout piles.
+One Gatling TypeScript simulation in `load/` (`pnpm load`). It is not part of `pnpm test`. It calls the BFF only, once per user, with no retry. The mock vendor still answers each call. Set `VENDOR_FAILURE_RATE` to 0 so a random fake error is not counted as a capacity problem. 50 users at once. Most calls under a few seconds. No crash. No leaked key. Watch timeout piles. The Gatling CLI wants Node.js 24.
 
 ## Example
 

@@ -112,6 +112,24 @@ pnpm test:e2e
 
 `pnpm test:e2e` starts the mock vendor, the BFF, and Vite, then opens the page. Cucumber reads `apps/web/e2e/features`. Steps call a page object, and the page object uses `apps/web/e2e/locators`. The vendor process is started with `VENDOR_SIMULATION=forced` and `VENDOR_FAILURE_RATE=0`, so a random failure does not flake the run. The Vite process does not receive the vendor key, the vendor URL, or `x-simulate`. The suite checks a valid quote, a bad amount that does not call the BFF, loading then the result, Tab and Enter, and a 390-pixel-wide screen.
 
+## Load
+
+The load run is separate from the other test commands. It needs Node.js 24 because that is what the Gatling CLI supports. The app itself still runs on Node.js 22.
+
+Start the mock vendor with `VENDOR_FAILURE_RATE=0`, and leave `ENABLE_COMMISSION_QUOTE` on. Then, from another terminal:
+
+```bash
+pnpm load
+```
+
+That sends 50 people to the BFF at once. Each person makes one GraphQL quote request and does not retry. Gatling fails the run if any request fails, if the 95th percentile is slower than 3 seconds, or if a response contains `api-key` or `node_modules`. The request does not send the vendor key. Pass `apiKey` only when you want Gatling to reject a response that contains that value. Do not commit the key.
+
+```bash
+pnpm load -- baseUrl=http://127.0.0.1:4000 users=50 apiKey="$VENDOR_API_KEY"
+```
+
+The HTML report is written under `load/target/gatling`.
+
 ## Mock formula and demo limits
 
 The challenge does not define a commission formula or a maximum loan. The numbers below are demo assumptions. When a real vendor arrives, delete the formula and trust the vendor's quote.

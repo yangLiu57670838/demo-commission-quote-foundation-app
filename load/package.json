@@ -1,0 +1,20 @@
+{
+  "name": "@commission-quote/load",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "load": "gatling run --typescript --simulation quote",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@gatling.io/core": "^3.14.6",
+    "@gatling.io/http": "^3.14.6"
+  },
+  "devDependencies": {
+    "@gatling.io/cli": "^3.14.6",
+    "typescript": "catalog:"
+  }
+}

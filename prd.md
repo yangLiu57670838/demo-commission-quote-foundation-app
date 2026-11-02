@@ -100,7 +100,7 @@ Run with `pnpm test:integration`. The tests live in `apps/bff/integration` and a
 
 ### Load
 
-Not part of the 4-hour must-ship. Add a small script later (k6 or autocannon) against the BFF with failure injection **off**, so random vendor errors are not mistaken for capacity problems.
+Not part of `pnpm test`. A Gatling TypeScript simulation in `load/` (`pnpm load`) calls the BFF with failure injection **off**, so random vendor errors are not mistaken for capacity problems.
 
 First target for a staff tool, not a public site: 50 users at once, most requests under a few seconds, no crash, no leaked key in errors. Watch for timeout piles and retries that hammer the vendor. Do not add retries until the vendor agrees that a repeat call is safe.
 
