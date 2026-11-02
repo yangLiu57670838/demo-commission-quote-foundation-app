@@ -12,3 +12,5 @@ catalog:
   "@types/express": 5.0.6
   zod: 4.6.7
   decimal.js: 10.6.0
+  uuid: 9.0.1
+  "@types/uuid": 9.0.8

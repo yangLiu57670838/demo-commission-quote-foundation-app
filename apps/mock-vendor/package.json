@@ -10,12 +10,14 @@
   "dependencies": {
     "@commission-quote/contracts": "workspace:*",
     "decimal.js": "catalog:",
-    "express": "^5.3.0"
+    "express": "^5.3.0",
+    "uuid": "catalog:"
   },
   "devDependencies": {
     "@types/express": "catalog:",
     "@types/jest": "catalog:",
     "@types/node": "catalog:",
+    "@types/uuid": "catalog:",
     "jest": "catalog:",
     "ts-jest": "catalog:",
     "tsx": "catalog:",

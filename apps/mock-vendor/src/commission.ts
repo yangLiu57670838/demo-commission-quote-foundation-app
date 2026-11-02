@@ -1,10 +1,9 @@
-import { randomUUID } from "node:crypto";
 import { quoteResponseSchema, type QuoteRequest, type QuoteResponse, type RiskBand } from "@commission-quote/contracts";
 import Decimal from "decimal.js";
+import { v4 as uuidv4 } from "uuid";
 
 /**
- * Mock formula only. The challenge does not define a rate.
- * Term is validated by the shared schema and does not change the rate.
+ * Mock formula only. here assume higher risk band means higher commission rate, but it is possible to change the formula later.
  */
 const MOCK_COMMISSION_RATES: Record<RiskBand, string> = {
   LOW: "0.005",
@@ -20,7 +19,7 @@ export function quoteCommission(input: QuoteRequest): QuoteResponse {
     .toFixed(2);
 
   return quoteResponseSchema.parse({
-    quoteId: randomUUID(),
+    quoteId: uuidv4(),
     commissionRate,
     totalCommission,
   });

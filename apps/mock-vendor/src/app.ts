@@ -6,6 +6,7 @@ import type { VendorAppConfig } from "./config";
 
 const QUOTE_PATH = "/commission-quotes";
 
+// extra secure check, may not that necessary for this mock vendor purpose
 function apiKeyMatches(provided: string | undefined, expected: string): boolean {
   if (provided === undefined) {
     return false;

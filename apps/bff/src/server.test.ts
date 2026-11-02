@@ -1,12 +1,19 @@
 import type { Server } from "node:http";
+import type { BffConfig } from "./config";
 import { createGraphqlServer } from "./server";
+
+const config: BffConfig = {
+  vendorApiUrl: "http://127.0.0.1:9",
+  vendorApiKey: "health-check-key",
+  vendorTimeoutMs: 2000,
+};
 
 describe("POST /graphql", () => {
   let server: Server;
   let port: number;
 
   beforeAll(async () => {
-    server = await createGraphqlServer();
+    server = await createGraphqlServer(config);
     await new Promise<void>((resolve) => {
       server.listen(0, resolve);
     });

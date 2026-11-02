@@ -15,6 +15,9 @@ catalogs:
     '@types/node':
       specifier: 26.6.6
       version: 26.6.6
+    '@types/uuid':
+      specifier: 9.0.8
+      version: 9.0.8
     decimal.js:
       specifier: 10.6.0
       version: 10.6.0
@@ -30,6 +33,9 @@ catalogs:
     typescript:
       specifier: 5.9.3
       version: 5.9.3
+    uuid:
+      specifier: 9.0.1
+      version: 9.0.1
     zod:
       specifier: 4.6.7
       version: 4.6.7
@@ -62,6 +68,9 @@ importers:
       '@as-integrations/express5':
         specifier: ^1.1.2
         version: 1.1.2(@apollo/server@5.5.1(graphql@16.14.2))(express@5.3.0)
+      '@commission-quote/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       cors:
         specifier: ^2.8.6
         version: 2.8.6
@@ -108,6 +117,9 @@ importers:
       express:
         specifier: ^5.3.0
         version: 5.3.0
+      uuid:
+        specifier: 'catalog:'
+        version: 9.0.1
     devDependencies:
       '@types/express':
         specifier: 'catalog:'
@@ -118,6 +130,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.6
+      '@types/uuid':
+        specifier: 'catalog:'
+        version: 9.0.8
       jest:
         specifier: 'catalog:'
         version: 30.5.2(@types/node@26.6.6)(babel-plugin-macros@3.1.0)
@@ -1376,6 +1391,9 @@ packages:
 
   '@types/tough-cookie@4.0.5':
     resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
+
+  '@types/uuid@9.0.8':
+    resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -3242,6 +3260,11 @@ packages:
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
+  uuid@9.0.1:
+    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+    hasBin: true
+
   v8-to-istanbul@9.3.0:
     resolution: {integrity: sha512-kiGUalWN+rgBJ/1OHZsBtU4rXZOfj/7rKQxULKlIzwzQSvMJUUNgPwJEEh7gU6xEVxC0ahoOBvN2YI8GH6FNgA==}
     engines: {node: '>=10.12.0'}
@@ -4598,6 +4621,8 @@ snapshots:
   '@types/stack-utils@2.0.3': {}
 
   '@types/tough-cookie@4.0.5': {}
+
+  '@types/uuid@9.0.8': {}
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -6636,6 +6661,8 @@ snapshots:
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
+
+  uuid@9.0.1: {}
 
   v8-to-istanbul@9.3.0:
     dependencies:
