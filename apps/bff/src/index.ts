@@ -14,7 +14,7 @@ const config = configResult.config;
 async function main() {
   const httpServer = await createGraphqlServer(config);
   await new Promise<void>((resolve) => {
-    httpServer.listen(port, resolve);
+    httpServer.listen(port, "0.0.0.0", resolve);
   });
   console.log(`BFF ready at http://localhost:${port}/graphql`);
 }

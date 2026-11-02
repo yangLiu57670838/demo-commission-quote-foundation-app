@@ -9,7 +9,7 @@ if (!config.ok) {
 
 const port = 4001;
 
-createApp(config.config).listen(port, () => {
+createApp(config.config).listen(port, "0.0.0.0", () => {
   console.log(`Mock vendor ready at http://localhost:${port}/health`);
 });
 

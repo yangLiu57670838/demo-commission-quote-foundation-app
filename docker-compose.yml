@@ -1,29 +1,85 @@
-# Demo stack. Env is injected at runtime from .env.dev, not baked into the image.
+# Three containers: mock vendor (Node), BFF (Node), and the staff page (nginx).
+# The vendor key comes from .env.dev at runtime. It is not baked into an image.
+# Only nginx is published. The vendor and the BFF stay on the compose network.
+
 services:
   mock-vendor:
-    build: .
-    command: pnpm --filter @commission-quote/mock-vendor dev
+    build:
+      context: .
+      target: mock-vendor
     env_file:
       - .env.dev
-    ports:
-      - "4001:4001"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4001/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
 
   bff:
-    build: .
-    command: pnpm --filter @commission-quote/bff dev
+    build:
+      context: .
+      target: bff
     env_file:
       - .env.dev
-    ports:
-      - "4000:4000"
     depends_on:
-      - mock-vendor
+      mock-vendor:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/graphql',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({query:'{ health }'})}).then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
 
   web:
-    build: .
-    command: pnpm --filter @commission-quote/web dev
-    env_file:
-      - .env.dev
-    ports:
-      - "5173:5173"
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
     depends_on:
-      - bff
+      bff:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
