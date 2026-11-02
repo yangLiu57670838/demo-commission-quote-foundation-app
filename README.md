@@ -81,4 +81,4 @@ To force that error every time, set `VENDOR_FAILURE_RATE=1` in `.env.local` and 
 
 ## AI
 
-Cursor's agent wrote the quote form, its tests, and this README. The form was then checked by hand: amount `10000` at `LOW` returned rate `0.005` and total `50.00`, amount `0` stayed on the page, and a forced vendor failure showed `Quote unavailable. Try again.` The page did not show the key or the vendor URL.
+A person drove the architecture: a React page, a BFF, and a mock vendor, with the vendor key staying on the server. Cursor's AI then built the app step by step from that plan (vibe coding). A person reviewed and polished the result, and checked the form by hand: amount `10000` at `LOW` returned rate `0.005` and total `50.00`, amount `0` stayed on the page, and a forced vendor failure showed `Quote unavailable. Try again.`.
