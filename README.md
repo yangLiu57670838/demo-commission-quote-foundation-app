@@ -104,7 +104,7 @@ pnpm typecheck
 Browser tests are separate again:
 
 ```bash
-pnpm exec playwright install chromium
+pnpm --filter @commission-quote/web exec playwright install chromium
 pnpm test:e2e
 ```
 
@@ -152,7 +152,7 @@ To force that error every time, set `VENDOR_FAILURE_RATE=1` in `.env.local` and 
 
 ## Log
 
-The page sends a trace id and a span id to the BFF. The BFF logs them at info, warn, or error. The vendor is unchanged. The loan and the api key stay out of the log.
+The page sends a trace id and a span id to the BFF. The BFF logs them at info, warn, or error. The loan and the api key stay out of the log.
 
 ```mermaid
 flowchart TD

@@ -140,20 +140,36 @@ export function QuoteForm() {
 
   return (
     <Box
-      component="form"
-      noValidate
-      onSubmit={onSubmit}
-      aria-busy={phase === "loading"}
       sx={{
+        minHeight: "100vh",
         display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        width: "100%",
-        maxWidth: "100%",
-        minWidth: 0,
-        mt: 3,
+        alignItems: "safe center",
+        justifyContent: "center",
+        px: 2,
+        py: 4,
+        overflowX: "clip",
+        boxSizing: "border-box",
       }}
     >
+      <Box sx={{ width: "100%", maxWidth: 480, minWidth: 0 }}>
+        <Typography variant="h1" sx={{ fontSize: "2rem", overflowWrap: "anywhere" }}>
+          Commission quotes
+        </Typography>
+        <Box
+          component="form"
+          noValidate
+          onSubmit={onSubmit}
+          aria-busy={phase === "loading"}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            width: "100%",
+            maxWidth: "100%",
+            minWidth: 0,
+            mt: 3,
+          }}
+        >
       <TextField
         id="loan-amount"
         label="Loan amount"
@@ -205,6 +221,7 @@ export function QuoteForm() {
         helperText={band.helperText}
         fullWidth
         slotProps={{
+          inputLabel: { shrink: true },
           select: { native: true },
           htmlInput: {
             ...band.inputAria,
@@ -232,6 +249,8 @@ export function QuoteForm() {
           <Typography sx={{ overflowWrap: "anywhere" }}>{requestError}</Typography>
         ) : null}
         {quote ? <QuoteDetails quote={quote} /> : null}
+      </Box>
+        </Box>
       </Box>
     </Box>
   );

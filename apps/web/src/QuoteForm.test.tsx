@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { App } from "./App";
+import { QuoteForm } from "./QuoteForm";
 import { QUOTE_UNAVAILABLE_MESSAGE } from "./quoteClient";
 
 const sampleQuote = {
@@ -38,7 +38,7 @@ async function fillValidLoan(user: ReturnType<typeof userEvent.setup>) {
   await user.selectOptions(screen.getByRole("combobox", { name: "Risk band" }), "LOW");
 }
 
-describe("App", () => {
+describe("QuoteForm", () => {
   const fetchMock = jest.fn();
 
   beforeEach(() => {
@@ -47,7 +47,7 @@ describe("App", () => {
   });
 
   it("shows the commission quote form", () => {
-    render(<App />);
+    render(<QuoteForm />);
 
     expect(screen.getByRole("heading", { name: "Commission quotes" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Loan amount" })).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe("App", () => {
   it("shows a quote after a valid submit", async () => {
     fetchMock.mockResolvedValue(jsonResponse(graphqlQuote()));
     const user = userEvent.setup();
-    render(<App />);
+    render(<QuoteForm />);
 
     await fillValidLoan(user);
     await user.click(screen.getByRole("button", { name: "Generate Quote" }));
@@ -84,7 +84,7 @@ describe("App", () => {
 
   it("shows an amount error and does not call the server", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    render(<QuoteForm />);
 
     await user.type(screen.getByRole("textbox", { name: "Loan amount" }), "0");
     await user.type(screen.getByRole("textbox", { name: "Loan term in months" }), "12");
@@ -106,7 +106,7 @@ describe("App", () => {
     const pending = deferredResponse();
     fetchMock.mockImplementation(() => pending.promise);
     const user = userEvent.setup();
-    render(<App />);
+    render(<QuoteForm />);
 
     await fillValidLoan(user);
     await user.click(screen.getByRole("button", { name: "Generate Quote" }));
@@ -130,7 +130,7 @@ describe("App", () => {
       }),
     );
     const user = userEvent.setup();
-    render(<App />);
+    render(<QuoteForm />);
 
     await fillValidLoan(user);
     await user.click(screen.getByRole("button", { name: "Generate Quote" }));
@@ -144,7 +144,7 @@ describe("App", () => {
   it("tabs through the fields and submits with Enter", async () => {
     fetchMock.mockResolvedValue(jsonResponse(graphqlQuote()));
     const user = userEvent.setup();
-    render(<App />);
+    render(<QuoteForm />);
 
     await user.tab();
     const amount = screen.getByRole("textbox", { name: "Loan amount" });
