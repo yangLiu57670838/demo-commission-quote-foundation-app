@@ -13,6 +13,13 @@ const GENERATE_COMMISSION_QUOTE = `mutation GenerateCommissionQuote($input: Quot
   }
 }`;
 
+function traceparent(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `00-${hex.slice(0, 32)}-${hex.slice(32)}-01`;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -33,7 +40,7 @@ export async function generateCommissionQuote(input: QuoteRequest): Promise<Quot
   try {
     response = await fetch(QUOTE_ENDPOINT, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", traceparent: traceparent() },
       body: JSON.stringify({
         query: GENERATE_COMMISSION_QUOTE,
         variables: { input },

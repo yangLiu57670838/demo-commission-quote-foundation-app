@@ -39,7 +39,6 @@ type GraphqlBody = {
 
 type VendorCall = {
   apiKey?: string;
-  requestId?: string;
   simulate?: string;
 };
 
@@ -86,7 +85,6 @@ async function startRecordingVendor(): Promise<Running & { calls: VendorCall[] }
   app.use((req, _res, next) => {
     calls.push({
       apiKey: req.get("api-key"),
-      requestId: req.get("x-request-id"),
       simulate: req.get("x-simulate"),
     });
     next();
@@ -209,9 +207,6 @@ describe("generateCommissionQuote", () => {
     const call = lastCall(vendor.calls);
     expect(call.apiKey).toBe(API_KEY);
     expect(call.simulate).toBe("success");
-    expect(call.requestId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-    );
     expectNoSecrets(text, vendor.url);
   });
 
@@ -292,9 +287,12 @@ describe("generateCommissionQuote", () => {
 
   it("rejects the quote before the vendor when the kill switch is off", async () => {
     const logs: string[] = [];
-    const spy = jest.spyOn(console, "log").mockImplementation((line: unknown) => {
+    const record = (line: unknown) => {
       logs.push(String(line));
-    });
+    };
+    const infoSpy = jest.spyOn(console, "info").mockImplementation(record);
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(record);
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(record);
     const bff = await startBff(
       bffConfig(vendor.url, { quotesEnabled: false, vendorSimulate: "success" }),
     );
@@ -308,12 +306,16 @@ describe("generateCommissionQuote", () => {
       expect(body.data?.generateCommissionQuote ?? null).toBeNull();
       expect(body.errors).toEqual([{ message: QUOTES_DISABLED_MESSAGE }]);
       expectNoSecrets(text, vendor.url);
-      expect(quoteLogs).toHaveLength(1);
-      const logged = JSON.parse(quoteLogs[0] ?? "{}") as { requestId?: string; outcome?: string };
+      const logged = JSON.parse(quoteLogs.find((line) => line.includes('"disabled"')) ?? "{}") as {
+        level?: string;
+        traceId?: string;
+        spanId?: string;
+        outcome?: string;
+      };
+      expect(logged.level).toBe("warn");
       expect(logged.outcome).toBe("disabled");
-      expect(logged.requestId).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-      );
+      expect(logged.traceId).toMatch(/^[0-9a-f]{32}$/);
+      expect(logged.spanId).toMatch(/^[0-9a-f]{16}$/);
       const logText = quoteLogs.join("\n");
       expect(logText).not.toContain(API_KEY);
       expect(logText).not.toContain(BROWSER_KEY);
@@ -322,7 +324,9 @@ describe("generateCommissionQuote", () => {
       expect(logText).not.toContain("loanTermInMonths");
       expect(logText).not.toContain("riskBand");
     } finally {
-      spy.mockRestore();
+      infoSpy.mockRestore();
+      warnSpy.mockRestore();
+      errorSpy.mockRestore();
       await bff.close();
     }
   });
@@ -332,7 +336,6 @@ describe("generateCommissionQuote with a vendor body that breaks the contract", 
   async function startFixedVendor(body: string): Promise<Running> {
     const server = http.createServer((req, res) => {
       expect(req.headers["api-key"]).toBe(API_KEY);
-      expect(req.headers["x-request-id"]).toEqual(expect.any(String));
       res.writeHead(200, { "content-type": "application/json" });
       res.end(body);
     });

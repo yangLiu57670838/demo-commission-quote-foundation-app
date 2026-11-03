@@ -26,7 +26,6 @@ const validQuote = {
 
 type CapturedRequest = {
   apiKey?: string;
-  requestId?: string;
   simulate?: string;
   body?: string;
 };
@@ -64,7 +63,6 @@ async function startStub(
     });
     req.on("end", () => {
       captured.apiKey = headerValue(req.headers["api-key"]);
-      captured.requestId = headerValue(req.headers["x-request-id"]);
       captured.simulate = headerValue(req.headers["x-simulate"]);
       captured.body = Buffer.concat(chunks).toString("utf8");
       respond(res, captured);
@@ -73,8 +71,6 @@ async function startStub(
   const port = await listen(server);
   return { port, captured, stop: () => close(server) };
 }
-
-const REQUEST_ID = "11111111-1111-4111-8111-111111111111";
 
 function configFor(port: number, simulate?: VendorSimulate, timeoutMs = 1000): BffConfig {
   return {
@@ -117,7 +113,7 @@ describe("publicErrorMessage", () => {
 });
 
 describe("requestCommissionQuote", () => {
-  it("posts the api key, a request id, and the loan body", async () => {
+  it("posts the api key and the loan body", async () => {
     const stub = await startStub((_res, captured) => {
       _res.writeHead(200, { "content-type": "application/json" });
       _res.end(JSON.stringify({ ...validQuote, debug: API_KEY }));
@@ -125,16 +121,12 @@ describe("requestCommissionQuote", () => {
     });
 
     try {
-      const quote = await requestCommissionQuote(
-        configFor(stub.port, "success"),
-        validInput,
-        REQUEST_ID,
-      );
+      const quote = await requestCommissionQuote(configFor(stub.port, "success"), validInput);
 
       expect(quoteResponseSchema.parse(quote)).toEqual(validQuote);
       expect(quote).not.toHaveProperty("debug");
       expect(stub.captured.apiKey).toBe(API_KEY);
-      expect(stub.captured.requestId).toBe(REQUEST_ID);
+      expect(stub.captured.body).not.toContain("traceparent");
       expect(stub.captured.body).toBe(JSON.stringify(validInput));
       expect(stub.captured.body).not.toContain(API_KEY);
     } finally {
@@ -149,7 +141,7 @@ describe("requestCommissionQuote", () => {
     });
 
     try {
-      await requestCommissionQuote(configFor(stub.port), validInput, REQUEST_ID);
+      await requestCommissionQuote(configFor(stub.port), validInput);
       expect(stub.captured.simulate).toBeUndefined();
     } finally {
       await stub.stop();
@@ -168,11 +160,7 @@ describe("requestCommissionQuote", () => {
     });
 
     try {
-      const error = await requestCommissionQuote(
-        configFor(stub.port, "success"),
-        validInput,
-        REQUEST_ID,
-      ).then(
+      const error = await requestCommissionQuote(configFor(stub.port, "success"), validInput).then(
         () => {
           throw new Error("Expected the vendor call to fail");
         },
@@ -203,11 +191,7 @@ describe("requestCommissionQuote", () => {
 
     try {
       const started = Date.now();
-      const error = await requestCommissionQuote(
-        configFor(stub.port, "timeout", 40),
-        validInput,
-        REQUEST_ID,
-      ).then(
+      const error = await requestCommissionQuote(configFor(stub.port, "timeout", 40), validInput).then(
         () => {
           throw new Error("Expected the vendor call to time out");
         },
@@ -235,7 +219,6 @@ describe("requestCommissionQuote", () => {
       const error = await requestCommissionQuote(
         { vendorApiUrl, vendorApiKey: API_KEY, vendorTimeoutMs: 500, quotesEnabled: true },
         validInput,
-        REQUEST_ID,
       ).then(
         () => {
           throw new Error("Expected the vendor call to fail");

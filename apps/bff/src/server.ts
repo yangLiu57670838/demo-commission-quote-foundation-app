@@ -5,10 +5,10 @@ import { quoteRequestSchema, type QuoteResponse } from "@commission-quote/contra
 import cors from "cors";
 import express from "express";
 import { GraphQLError, type GraphQLFormattedError } from "graphql";
-import { randomUUID } from "node:crypto";
 import http from "node:http";
 import type { BffConfig } from "./config";
-import { QUOTES_DISABLED_MESSAGE, logQuote } from "./quoteLog";
+import { QUOTES_DISABLED_MESSAGE, logQuote, type QuoteLog } from "./quoteLog";
+import { startTrace } from "./trace";
 import {
   QUOTE_UNAVAILABLE_MESSAGE,
   VendorCallError,
@@ -38,6 +38,7 @@ const typeDefs = `#graphql
   }
 `;
 
+// just return the first issue message, but its ok since its a safe guard for the frontend, UI already use zod to validate the input
 function validationMessage(issues: { message: string }[]): string {
   const issue = issues[0];
   if (issue === undefined || issue.message.length === 0) {
@@ -59,26 +60,40 @@ export async function createGraphqlServer(config: BffConfig) {
         generateCommissionQuote: async (
           _parent: unknown,
           args: { input: unknown },
+          context: { traceparent?: string },
         ): Promise<QuoteResponse> => {
-          const requestId = randomUUID();
+          const trace = startTrace(context.traceparent);
           const secrets = [config.vendorApiKey, config.vendorApiUrl];
+          const log = (event: Pick<QuoteLog, "level" | "outcome" | "quoteId" | "reason">) => {
+            logQuote({ ...trace, ...event }, secrets);
+          };
+          log({ level: "info", outcome: "received" });
           if (!config.quotesEnabled) {
-            logQuote({ requestId, outcome: "disabled" }, secrets);
+            log({ level: "warn", outcome: "disabled" });
             throw new GraphQLError(QUOTES_DISABLED_MESSAGE);
           }
 
           const parsed = quoteRequestSchema.safeParse(args.input);
           if (!parsed.success) {
-            logQuote({ requestId, outcome: "invalid" }, secrets);
+            log({
+              level: "warn",
+              outcome: "invalid",
+              reason: validationMessage(parsed.error.issues),
+            });
             throw new GraphQLError(validationMessage(parsed.error.issues));
           }
 
+          log({ level: "info", outcome: "vendor" });
           try {
-            const quote = await requestCommissionQuote(config, parsed.data, requestId);
-            logQuote({ requestId, outcome: "quoted" }, secrets);
+            const quote = await requestCommissionQuote(config, parsed.data);
+            log({ level: "info", outcome: "quoted", quoteId: quote.quoteId });
             return quote;
           } catch (error) {
-            logQuote({ requestId, outcome: "failed" }, secrets);
+            log({
+              level: "error",
+              outcome: "failed",
+              reason: error instanceof VendorCallError ? error.kind : "unexpected",
+            });
             if (error instanceof VendorCallError) {
               throw new GraphQLError(error.message);
             }
@@ -100,7 +115,9 @@ export async function createGraphqlServer(config: BffConfig) {
     "/graphql",
     cors({ origin: "http://localhost:5173" }),
     express.json(),
-    expressMiddleware(server),
+    expressMiddleware(server, {
+      context: async ({ req }) => ({ traceparent: req.header("traceparent") }),
+    }),
   );
 
   return httpServer;

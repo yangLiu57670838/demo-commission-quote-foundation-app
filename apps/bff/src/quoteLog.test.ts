@@ -4,15 +4,24 @@ const API_KEY = "server-test-key";
 const VENDOR_URL = "http://127.0.0.1:4001";
 
 describe("quoteLogLine", () => {
-  it("writes the request id and outcome without the loan body", () => {
+  it("writes the trace id and outcome without the loan body", () => {
     const line = quoteLogLine(
-      { requestId: "11111111-1111-4111-8111-111111111111", outcome: "quoted" },
+      {
+        level: "info",
+        traceId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        spanId: "bbbbbbbbbbbbbbbb",
+        outcome: "quoted",
+        quoteId: "quote-1",
+      },
       [API_KEY, VENDOR_URL],
     );
 
     expect(JSON.parse(line)).toEqual({
-      requestId: "11111111-1111-4111-8111-111111111111",
+      level: "info",
+      traceId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      spanId: "bbbbbbbbbbbbbbbb",
       outcome: "quoted",
+      quoteId: "quote-1",
     });
     expect(line).not.toContain("loanAmount");
     expect(line).not.toContain("10000");
@@ -22,7 +31,13 @@ describe("quoteLogLine", () => {
 
   it("redacts the api key and the vendor url when they appear in the line", () => {
     const line = quoteLogLine(
-      { requestId: `req-${API_KEY}`, outcome: "failed" },
+      {
+        level: "error",
+        traceId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        spanId: "bbbbbbbbbbbbbbbb",
+        outcome: "failed",
+        reason: `call ${API_KEY}`,
+      },
       [API_KEY, VENDOR_URL],
     );
 

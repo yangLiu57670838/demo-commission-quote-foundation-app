@@ -60,8 +60,6 @@ pnpm install
 | `VENDOR_FAILURE_RATE` | Chance the mock fails a quote, from `0` to `1`. `0.2` if unset (about one call in five). |
 | `BFF_URL` | Where the Vite dev server proxies `/graphql`. `http://localhost:4000` if unset. nginx does not use this. It proxies to the BFF container directly. |
 
-`ENABLE_COMMISSION_QUOTE=false` turns quotes off in the BFF before the vendor is called. The page then says `Commission quotes are turned off.` Any other value, or leaving it unset, leaves quotes on. Set it back to `true` and restart the BFF to turn them on again.
-
 The page calls `/graphql` on its own origin. With `pnpm dev`, Vite proxies that to the BFF. In Compose, nginx does. The page has no vendor URL and no `api-key`.
 
 ## Start
@@ -147,6 +145,30 @@ With `VENDOR_FAILURE_RATE=0.2`, some quotes fail on their own. The page then say
 To force that error every time, set `VENDOR_FAILURE_RATE=1` in `.env.local` and restart `pnpm dev`. For Compose, set it in `.env.dev` and recreate the mock-vendor container. Generate a quote. Set the rate back to `0.2` afterwards. `0` makes the mock succeed on every call, which is useful when a random failure would hide a different bug.
 
 `VENDOR_SIMULATION=forced` is for the Jest tests. In that mode the mock honors an `x-simulate` header of `success`, `error`, or `timeout` from the BFF. The browser never sends that header, and `pnpm dev` does not turn the env var into one. Leave `VENDOR_SIMULATION` out of `.env.local`.
+
+## Feature toggle
+
+- **Kill switch.** `ENABLE_COMMISSION_QUOTE=false` stops quotes in the BFF before the vendor is called. The page says `Commission quotes are turned off.` Leave the variable unset, or set it to `true`, and restart the BFF to turn quotes on.
+
+## Log
+
+The page sends a trace id and a span id to the BFF. The BFF logs them at info, warn, or error. The vendor is unchanged. The loan and the api key stay out of the log.
+
+```mermaid
+flowchart TD
+  page["Page: trace id and span id"]
+  bff["BFF: same trace id, new span id"]
+  page -->|"traceparent"| bff
+  bff --> received["info received<br/>trace id, span id"]
+  received --> enabled{"Quotes on?"}
+  enabled -->|no| disabled["warn disabled"]
+  enabled -->|yes| valid{"Input valid?"}
+  valid -->|no| invalid["warn invalid"]
+  valid -->|yes| vendor["info vendor"]
+  vendor --> result{"Vendor replies?"}
+  result -->|quote| quoted["info quoted<br/>quote id"]
+  result -->|fail| failed["error failed"]
+```
 
 ## Later
 

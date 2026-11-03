@@ -67,13 +67,12 @@ async function discardBody(response: Response): Promise<void> {
 export async function requestCommissionQuote(
   config: BffConfig,
   input: QuoteRequest,
-  requestId: string,
 ): Promise<QuoteResponse> {
   const headers: Record<string, string> = {
     "content-type": "application/json",
     "api-key": config.vendorApiKey,
-    "x-request-id": requestId,
   };
+  // when testing, we can force the vendor to return a success, error, or timeout
   if (config.vendorSimulate !== undefined) {
     headers["x-simulate"] = config.vendorSimulate;
   }
