@@ -78,6 +78,18 @@ On the page, enter a loan amount, a whole number of months, and a risk band (`LO
 
 Example: amount `10000`, term `12`, band `LOW` returns commission rate `0.005` and total commission `50.00`. The quote id is new each time.
 
+## a11y
+
+Keyboard:
+
+- Tab moves through Loan amount, Loan term in months, Risk band, then **Generate Quote**.
+- Enter in a field submits the form.
+
+Screen reader:
+
+- Each field has a visible label.
+- A bad field sets `aria-invalid` and `aria-describedby` so the error next to the field is announced.
+
 ## Docker
 
 Compose runs three containers together: the mock vendor (Node), the BFF (Node), and nginx. nginx serves the built staff page and proxies `/graphql` to the BFF. The vendor and the BFF stay on the Compose network. Only nginx is published.
